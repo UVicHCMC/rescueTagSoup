@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="fullBuild" name="rescueTagSoup" xmlns:if="ant:if"
+    xmlns:unless="ant:unless">
+    <description>
+    #####################################################################
+    #    Project build file by Martin Holmes (mholmes@uvic.ca), 2024.   #
+    
+    This build file does these basic tasks:
+    
+    * Processes a folder of tagsoup HTML to create a parallel folder of
+      well-formed XML in the XHTML namespace (using htmlparser-1.4.jar).
+    
+    * Processes each of those files with XSLT to fix a range of 
+      anticipated problems and forms not compatible with XHTML5.
+    
+    * Validates the resulting HTML with the vnu.jar validator.
+    
+    It requires java libraries that are in the /lib/ folder.
+    
+    Just type:
+    
+    ant -Dsource=pathToSourceFolder -Doutput=pathToOutputFolder
+    
+    at the command line to run the build. 
+    
+    #                                                                   #
+    #####################################################################
+    </description>
+    
+    <property name="echo.separator" value="************************************************"/>
+    
+    <!-- ISO 8601 date for injection where appropriate. -->
+    <tstamp>
+        <format property="today" pattern="yyyy-MM-dd" locale="en,CA"/>
+    </tstamp>
+    
+    <!-- Folder for incoming tagsoup HTML. -->
+    <property name="source" value="${basedir}/test/source"/>
+    
+    <!-- Folder for outgoing rescued XHTML5 -->
+    <property name="output" value="${basedir}/test/output"/>
+    
+    <!--  We may need ant-contrib, but if not, this can be removed. -->
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+    
+    <!-- Location of Saxon jar. -->
+    <property name="saxon" value="${basedir}/lib/saxon-he-12.5.jar"/>
+    
+    <!-- Location of htmlparser jar. -->
+    <property name="htmlparser" value="${basedir}/lib/htmlparser-1.4.jar"/>
+    
+    <!-- Source HTML documents.  -->
+    <fileset id="sourceHtml" dir="${source}">
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.HTM"/>
+        <include name="**/*.HTML"/>
+    </fileset>
+    
+    <!-- Output XHTML documents. -->
+    <fileset id="outputHtml" dir="${output}">
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.HTM"/>
+        <include name="**/*.HTML"/>
+    </fileset>
+    
+    <target name="clean">
+        <description>
+            TARGET clean:
+            Removes old products in case this is required.
+        </description>
+        <echo message="${echo.separator}"/>
+        <echo message="Removing old products from the output folder..."/>
+        <mkdir dir="${output}"/>
+        <delete includeemptydirs="false">
+            <fileset id="outputHtml"/>
+        </delete>
+    </target>
+    
+    <target name="validateOutput">
+        <description>
+            TARGET validateOutput
+            This target validates the collection of XHTML5-adjacent documents 
+            comprising the output site, using the VNU validator (the same 
+            validator used by  the W3C's online validation service).
+        </description>
+        <echo message="${echo.separator}"/>
+        <echo message="Validating the HTML pages produced in the build using the VNU validator."/>
+        <java jar="${basedir}/lib/vnu.jar" failonerror="false" fork="true">
+            <arg value="--format text"/>
+            <arg value="--skip-non-html"/>
+            <arg value="--xml"/>
+            <arg value="--also-check-css"/>
+            <arg value="--errors-only"/>
+            <arg value="${output}"/>
+        </java>
+    </target>
+    
+    <target name="fullBuild">
+        <description>
+            TARGET fullBuild
+            This runs the entire build process.
+        </description>
+        <antcall target="clean"/>
+        <antcall target="validateOutput"/>
+        
+        <!-- TODO: Do initial conversion. -->
+        
+        <!--  TODO: Run remediation XSLT. -->
+        
+        <echo message="${echo.separator}"/>
+        <echo message="Done!"/>
+    </target>
+  
+</project>
