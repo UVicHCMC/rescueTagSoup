@@ -55,4 +55,15 @@
         <xsl:attribute name="{lower-case(local-name())}" select="lower-case(.)"/>
     </xsl:template>
     
+    <xd:doc>
+        <xd:desc>Image tags must have an alt attribute.</xd:desc>
+    </xd:doc>
+    <xsl:template match="img[not(@alt)]">
+        <xsl:comment>Please check the @alt attribute and ensure it is useful and accurate.</xsl:comment>
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
+        </xsl:copy>
+    </xsl:template>
+    
 </xsl:stylesheet>
