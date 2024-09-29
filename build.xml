@@ -35,10 +35,10 @@
     </tstamp>
     
     <!-- Folder for incoming tagsoup HTML. -->
-    <property name="source" value="${basedir}/test/source"/>
+    <property name="source" value="${basedir}/tests/source"/>
     
     <!-- Folder for outgoing rescued XHTML5 -->
-    <property name="output" value="${basedir}/test/output"/>
+    <property name="output" value="${basedir}/tests/output"/>
     
     <!--  We may need ant-contrib, but if not, this can be removed. -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
@@ -78,6 +78,21 @@
         </delete>
     </target>
     
+    <target name="parseAllFiles">
+        <description>
+            TARGET parseAllFiles 
+            This target runs every file found in the source folder
+            through the parseOneFile target.
+        </description>
+        <!-- Just in case it doesn't exist yet. -->
+        <mkdir dir="${output}"/>
+        <foreach target="parseOneFile" param="sourceFile">
+            <path>
+                <fileset refid="sourceHtml"/>
+            </path>
+        </foreach>
+    </target>
+    
     <target name="parseOneFile">
         <description>
             TARGET parseOneFile
@@ -89,7 +104,12 @@
         <echo message="${echo.separator}"/>
         <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${output}"/>
         <echo message="Parsing the file ${sourceFile} to create the file ${outputFile}..."/>
-        
+        <java classpath="${basedir}/lib/htmlparser-1.4.jar" 
+              classname="nu.validator.htmlparser.tools.HTML2XML"
+              fork="true">
+            <arg value="${sourceFile}"/>
+            <arg value="${outputFile}"/>
+        </java>
     </target>
     
     <target name="validateOutput">
