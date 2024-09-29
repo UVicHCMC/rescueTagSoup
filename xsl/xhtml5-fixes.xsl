@@ -28,6 +28,15 @@
     <xsl:mode on-no-match="shallow-copy"/>
     
     <xd:doc>
+        <xd:desc>We need a sequence of obsolete attribute names so that we can 
+        intervene for elements that carry them and construct CSS classes.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="deadAttNames" as="xs:string+" 
+        select="('bgcolor', 'cellpadding', 'cellspacing', 'border', 
+        'width', 'height', 'align', 'valign', 'hspace', 'link', 'alink',
+        'vlink', 'text')"/>
+    
+    <xd:doc>
         <xd:desc>The default template kicks everything off.</xd:desc>
     </xd:doc>
     <xsl:template match="/">
@@ -35,9 +44,26 @@
     </xsl:template>
     
     <xd:doc>
+        <xd:desc>We have a lot of work to do in the head tag, if there are 
+        obsolete style-like attributes from HTML4 and below.</xd:desc>
+    </xd:doc>
+    <xsl:template match="html[body/descendant::*/@*[local-name() = $deadAttNames]]/head">
+        <xsl:copy>
+            <xsl:apply-templates select="@*|node()"/>
+            <style>
+                <xsl:for-each select="parent::html/body//*[@*[local-name() = $deadAttNames]]">
+                    <xsl:sequence select="'&#x0a;.c_' || generate-id() || '{'"/>
+          
+                    <xsl:sequence select="'&#x0a;}'"/>
+                </xsl:for-each>
+            </style>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
         <xd:desc>Attributes no longer needed.</xd:desc>
     </xd:doc>
-    <xsl:template match="script/@language"/>
+    <xsl:template match="script/@language | script/@LANGUAGE | @*[local-name() = $deadAttNames]"/>
     
     <xd:doc>
         <xd:desc>Old font tag.</xd:desc>
@@ -65,5 +91,10 @@
             <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
         </xsl:copy>
     </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Suppress any old comments aimed at IE.</xd:desc>
+    </xd:doc>
+    <xsl:template match="comment()[matches(., '\[if ') and matches(., ' IE ')]"/>
     
 </xsl:stylesheet>
