@@ -22,7 +22,7 @@
         <xd:desc>Output should be HTML5 in the XHTML namespace.</xd:desc>
     </xd:doc>
     <xsl:output method="xhtml" html-version="5" cdata-section-elements="script style" encoding="UTF-8"
-        normalization-form="NFC" exclude-result-prefixes="#all"/>
+        normalization-form="NFC" exclude-result-prefixes="#all" omit-xml-declaration="yes"/>
     
     <xd:doc>
         <xd:desc>The default template kicks everything off.</xd:desc>
