@@ -24,6 +24,9 @@
     <xsl:output method="xhtml" html-version="5" cdata-section-elements="script style" encoding="UTF-8"
         normalization-form="NFC" exclude-result-prefixes="#all" omit-xml-declaration="yes"/>
     
+    <!-- This is an identity transform essentially. -->
+    <xsl:mode on-no-match="shallow-copy"/>
+    
     <xd:doc>
         <xd:desc>The default template kicks everything off.</xd:desc>
     </xd:doc>

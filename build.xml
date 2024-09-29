@@ -40,6 +40,9 @@
     <!-- Folder for outgoing rescued XHTML5 -->
     <property name="output" value="${basedir}/tests/output"/>
     
+    <!-- Folder for temporary in-process files. -->
+    <property name="temp" value="${basedir}/temp"/>
+    
     <!--  We may need ant-contrib, but if not, this can be removed. -->
     <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
     
@@ -51,6 +54,14 @@
     
     <!-- Source HTML documents.  -->
     <fileset id="sourceHtml" dir="${source}">
+        <include name="**/*.htm"/>
+        <include name="**/*.html"/>
+        <include name="**/*.HTM"/>
+        <include name="**/*.HTML"/>
+    </fileset>
+    
+    <!-- Half-processed temp documents. -->
+    <fileset id="parsedHtml" dir="${temp}">
         <include name="**/*.htm"/>
         <include name="**/*.html"/>
         <include name="**/*.HTM"/>
@@ -76,6 +87,8 @@
         <delete includeemptydirs="false">
             <fileset refid="outputHtml"/>
         </delete>
+        <delete dir="temp"/>
+        <mkdir dir="temp"/>
     </target>
     
     <target name="parseAllFiles">
@@ -102,7 +115,7 @@
             java -cp htmlparser-1.4.jar nu.validator.htmlparser.tools.HTML2XML inputsoup.html output.html
         </description>
         <echo message="${echo.separator}"/>
-        <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${output}"/>
+        <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${temp}"/>
         <echo message="Parsing the file ${sourceFile} to create the file ${outputFile}..."/>
         <java classpath="${basedir}/lib/htmlparser-1.4.jar" 
               classname="nu.validator.htmlparser.tools.HTML2XML"
@@ -120,7 +133,7 @@
         </description>
         <foreach target="fixOneFile" param="wellFormedFile">
             <path>
-                <fileset refid="outputHtml"/>
+                <fileset refid="parsedHtml"/>
             </path>
         </foreach>
     </target>
@@ -133,12 +146,13 @@
             known issues.
         </description>
         <echo message="${echo.separator}"/>
-        <echo message="Remediating known possible issues in the file ${wellFormedFile}..."/>
+        <propertyregex property="outputFile" input="${wellFormedFile}" regexp="${temp}" replace="${output}"/>
+        <echo message="Remediating known possible issues in the file ${wellFormedFile} to create ${outputFile}..."/>
         <java fork="true" classname="net.sf.saxon.Transform" classpath="${saxon}" failonerror="true">
             <jvmarg value="-Xmx1024m"/>
             <arg value="-s:${wellFormedFile}"/>
             <arg value="-xsl:${basedir}/xsl/xhtml5-fixes.xsl"/>
-            <arg value="-o:${wellFormedFile}/"/>
+            <arg value="-o:${outputFile}/"/>
             <arg value="--suppressXsltNamespaceCheck:on"/>
         </java>
     </target>
