@@ -78,6 +78,20 @@
         </delete>
     </target>
     
+    <target name="parseOneFile">
+        <description>
+            TARGET parseOneFile
+            This target is passed the path to a source tagsoup file and 
+            calculates an output path for it, then calls the htmlparser
+            jar to process the file. The command-line would be:
+            java -cp htmlparser-1.4.jar nu.validator.htmlparser.tools.HTML2XML inputsoup.html output.html
+        </description>
+        <echo message="${echo.separator}"/>
+        <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${output}"/>
+        <echo message="Parsing the file ${sourceFile} to create the file ${outputFile}..."/>
+        
+    </target>
+    
     <target name="validateOutput">
         <description>
             TARGET validateOutput
