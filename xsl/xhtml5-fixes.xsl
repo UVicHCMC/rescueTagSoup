@@ -21,7 +21,7 @@
     <xd:doc>
         <xd:desc>Output should be HTML5 in the XHTML namespace.</xd:desc>
     </xd:doc>
-    <xsl:output method="xhtml" html-version="5" cdata-section-elements="script" encoding="UTF-8"
+    <xsl:output method="xhtml" html-version="5" encoding="UTF-8"
         normalization-form="NFC" exclude-result-prefixes="#all" omit-xml-declaration="yes"/>
     
     <xd:doc>
@@ -137,6 +137,22 @@
         <div class="centered">
             <xsl:apply-templates select="node()"/>
         </div>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The script element is special: we need it to be output as CDATA,
+        but the CDATA wrapper itself needs to be commented out in JS, then the 
+        JS code itself needs to be commented out for XML purposes.</xd:desc>
+    </xd:doc>
+    <xsl:template match="script[not(@source)]">
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:text disable-output-escaping="yes">//&lt;![CDATA[</xsl:text>
+            <xsl:comment>
+                <xsl:sequence select="."/>
+            </xsl:comment>   
+            <xsl:text disable-output-escaping="yes">//]]&gt;</xsl:text>
+        </xsl:copy>
     </xsl:template>
     
     <xd:doc>
