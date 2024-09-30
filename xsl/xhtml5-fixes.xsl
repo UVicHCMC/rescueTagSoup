@@ -24,17 +24,38 @@
     <xsl:output method="xhtml" html-version="5" cdata-section-elements="script" encoding="UTF-8"
         normalization-form="NFC" exclude-result-prefixes="#all" omit-xml-declaration="yes"/>
     
-    <!-- This is an identity transform essentially. -->
+    <xd:doc>
+        <xd:desc>Default mode is an identity transform.</xd:desc>
+    </xd:doc>
     <xsl:mode on-no-match="shallow-copy"/>
     
     <xd:doc>
-        <xd:desc>We need a sequence of obsolete attribute names so that we can 
-        intervene for elements that carry them and construct CSS classes.</xd:desc>
+        <xd:desc>Special css mode does not cascade.</xd:desc>
     </xd:doc>
-    <xsl:variable name="deadAttNames" as="xs:string+" 
-        select="('bgcolor', 'cellpadding', 'cellspacing', 'border', 
+    <xsl:mode name="css" on-no-match="deep-skip"/>
+    
+    <xd:doc>
+        <xd:desc>We need a sequence of obsolete attribute names so that we can 
+        intervene for elements that carry them and construct CSS classes. These
+        are the attributes which define properties for their parent elements.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="deadAttNamesCurrent" as="xs:string+" 
+        select="('bgcolor', 'border', 
         'width', 'height', 'align', 'valign', 'hspace', 'link', 'alink',
+        'vlink', 'text', 'face', 'size')"/>
+    
+    <xd:doc>
+        <xd:desc>These are the attributes which define properties for 
+            some of their descendant elements.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="deadAttNamesDesc" as="xs:string+" 
+        select="('cellpadding', 'cellspacing', 'alink',
         'vlink', 'text')"/>
+    
+    <xd:doc>
+        <xd:desc>For @match, it's useful to have a union of these.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="deadAttNames" as="xs:string+" select="($deadAttNamesCurrent, $deadAttNamesDesc)"/>
     
     <xd:doc>
         <xd:desc>The default template kicks everything off.</xd:desc>
@@ -47,13 +68,15 @@
         <xd:desc>We have a lot of work to do in the head tag, if there are 
         obsolete style-like attributes from HTML4 and below.</xd:desc>
     </xd:doc>
-    <xsl:template match="html[body/descendant::*/@*[local-name() = $deadAttNames]]/head">
+    <xsl:template match="html[body/descendant-or-self::*/@*[local-name() = $deadAttNames] or descendant::center]/head">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()"/>
             <style>
-                <xsl:for-each select="parent::html/body//*[@*[local-name() = $deadAttNames]]">
+                <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
+                <xsl:for-each select="parent::html/body//descendant-or-self::*[@*[local-name() = $deadAttNames]]">
                     <xsl:sequence select="'&#x0a;.c_' || generate-id() || '{'"/>
-          
+                        <xsl:apply-templates select="@*[local-name() = $deadAttNamesCurrent]" mode="css"/>
+                        <xsl:apply-templates select="@*[local-name() = $deadAttNamesDesc]" mode="css"/>
                     <xsl:sequence select="'&#x0a;}'"/>
                 </xsl:for-each>
             </style>
@@ -66,12 +89,54 @@
     <xsl:template match="script/@language | script/@LANGUAGE | @*[local-name() = $deadAttNames]"/>
     
     <xd:doc>
-        <xd:desc>Old font tag.</xd:desc>
+        <xd:desc>When we meet an element that carries obsolete attributes, we
+        need to give it a class. TODO: This is a temporary hack, since these elements
+        may need other specific processing as well.</xd:desc>
     </xd:doc>
-    <xsl:template match="font[@face or @FACE] | FONT[@face or @FACE]">
-        <span>
-            <xsl:attribute name="style">font-family: {if (@FACE) then @FACE else @face}</xsl:attribute>
-        </span>
+    <xsl:template match="body/descendant-or-self::*[@*[local-name() = $deadAttNames]]">
+        <xsl:choose>
+            <xsl:when test="self::font or self::FONT">
+                <span class="{string-join((generate-id(), @class), ' ')}">
+                    <xsl:apply-templates select="@*|node()"/>
+                </span>
+            </xsl:when>
+            <xsl:when test="self::img">
+                <xsl:comment>Please supply good @alt attribute.</xsl:comment>
+                <xsl:copy>
+                    <xsl:apply-templates select="@*[not(local-name() eq 'class')]"/>
+                    <xsl:attribute name="class" select="string-join(('c_' || generate-id(), @class), ' ')"/>
+                    <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
+                </xsl:copy>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:copy>
+                    <xsl:apply-templates select="@*[not(local-name() eq 'class')]"/>
+                    <xsl:attribute name="class" select="string-join(('c_' || generate-id(), @class), ' ')"/>
+                    <xsl:apply-templates select="node()"/>
+                </xsl:copy>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+        
+    <xd:doc>
+        <xd:desc>We need to catch img tags without @alt which don't have other weird attributes.</xd:desc>
+    </xd:doc>
+    <xsl:template match="img[not(@*[local-name() = $deadAttNames]) and not(@alt)]">
+        <xsl:comment>Please supply good @alt attribute.</xsl:comment>
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>This is a bit of a hack -- we don't know if a div element
+        will be valid in this context.</xd:desc>
+    </xd:doc>
+    <xsl:template match="center">
+        <div class="centered">
+            <xsl:apply-templates select="node()"/>
+        </div>
     </xsl:template>
     
     <xd:doc>
@@ -79,17 +144,6 @@
     </xd:doc>
     <xsl:template match="input/@TYPE | input/@type">
         <xsl:attribute name="{lower-case(local-name())}" select="lower-case(.)"/>
-    </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>Image tags must have an alt attribute.</xd:desc>
-    </xd:doc>
-    <xsl:template match="img[not(@alt)]">
-        <xsl:comment>Please check the @alt attribute and ensure it is useful and accurate.</xsl:comment>
-        <xsl:copy>
-            <xsl:apply-templates select="@*"/>
-            <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
-        </xsl:copy>
     </xsl:template>
     
     <xd:doc>
@@ -110,5 +164,21 @@
         <xd:desc>Suppress any old comments aimed at IE.</xd:desc>
     </xd:doc>
     <xsl:template match="comment()[matches(., '\[if ') and matches(., ' IE ')]"/>
+    
+    <!-- ############ TEMPLATES IN css MODE DEALING WITH OBSOLETE ATTRIBUTES. ############ -->
+    
+    <xd:doc>
+        <xd:desc>Default low-priority do-nothing to suppress stuff.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@*[local-name() = $deadAttNames]" mode="#all" priority="-1"/>
+    
+    <xd:doc>
+        <xd:desc>The border attribute just had 1 or 0 for on or off.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@border" mode="css">
+        <xsl:if test=". = '1'">
+            <xsl:sequence select="'&#x0a; border: solid 1px black'"/>
+        </xsl:if>
+    </xsl:template>
     
 </xsl:stylesheet>
