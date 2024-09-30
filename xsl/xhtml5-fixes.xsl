@@ -21,7 +21,7 @@
     <xd:doc>
         <xd:desc>Output should be HTML5 in the XHTML namespace.</xd:desc>
     </xd:doc>
-    <xsl:output method="xhtml" html-version="5" cdata-section-elements="script style" encoding="UTF-8"
+    <xsl:output method="xhtml" html-version="5" cdata-section-elements="script" encoding="UTF-8"
         normalization-form="NFC" exclude-result-prefixes="#all" omit-xml-declaration="yes"/>
     
     <!-- This is an identity transform essentially. -->
@@ -89,6 +89,20 @@
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>This is a temporary implementation of handling for the style element.
+        We will need to enhance this to allow for CORS-friendly processing which would
+        externalize the stylesheet.</xd:desc>
+    </xd:doc>
+    <xsl:template match="style">
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:comment>
+                <xsl:apply-templates select="node()"/>
+            </xsl:comment>
         </xsl:copy>
     </xsl:template>
     
