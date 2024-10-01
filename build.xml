@@ -116,7 +116,9 @@
         </description>
         <echo message="${echo.separator}"/>
         <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${temp}"/>
+        <dirname property="outputDir" file="${outputFile}"/>
         <echo message="Parsing the file ${sourceFile} to create the file ${outputFile}..."/>
+        <mkdir dir="${outputDir}"/>
         <java classpath="${basedir}/lib/htmlparser-1.4.jar" 
               classname="nu.validator.htmlparser.tools.HTML2XML"
               fork="true">
@@ -182,7 +184,6 @@
             This runs the entire build process.
         </description>
         <antcall target="clean"/>
-        <antcall target="validateOutput"/>
         
         <!-- Do initial conversion. -->
         <antcall target="parseAllFiles"/>
