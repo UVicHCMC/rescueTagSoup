@@ -144,7 +144,7 @@
         but the CDATA wrapper itself needs to be commented out in JS, then the 
         JS code itself needs to be commented out for XML purposes.</xd:desc>
     </xd:doc>
-    <xsl:template match="script[not(@source) and not(contains(., '[CDATA['))]">
+    <xsl:template match="script[not(@src) and not(contains(., '[CDATA['))]">
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:text disable-output-escaping="yes">//&lt;![CDATA[</xsl:text>
@@ -159,7 +159,7 @@
         <xd:desc>When the script element already has appropriate CDATA 
         handling, we just need to output it appropriately.</xd:desc>
     </xd:doc>
-    <xsl:template match="script[not(@source) and contains(., '[CDATA[')]">
+    <xsl:template match="script[not(@src) and contains(., '[CDATA[')]">
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:value-of select="." disable-output-escaping="yes"/>
