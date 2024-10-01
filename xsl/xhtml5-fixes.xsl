@@ -86,7 +86,7 @@
     <xd:doc>
         <xd:desc>Attributes no longer needed.</xd:desc>
     </xd:doc>
-    <xsl:template match="script/@language | script/@LANGUAGE | script/@type | @*[local-name() = $deadAttNames]"/>
+    <xsl:template match="script/@language | script/@LANGUAGE | script/@type | @*[local-name() = $deadAttNames] a/descendant::*/@tabindex"/>
     
     <xd:doc>
         <xd:desc>When we meet an element that carries obsolete attributes, we
