@@ -174,6 +174,35 @@
     </xsl:template>
     
     <xd:doc>
+        <xd:desc>Fix the duplicate-id problem.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@id[. = preceding::*/@id]"/>
+    
+    <xd:doc>
+        <xd:desc>There seems to be a problem with xml: prefixed attributes.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@xmlU00003Alang">
+        <xsl:attribute name="xml:lang" select="."/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Suppress any content-language meta tag; this info should be on 
+            the root html element. Also suppress obsolete IE-related meta-tag.</xd:desc>
+    </xd:doc>
+    <xsl:template match="meta[@http-equiv=('content-language', 'X-UA-Compatible')]"/>
+    
+    <xd:doc>
+        <xd:desc>Suppress language specification using a meta tag.</xd:desc>
+    </xd:doc>
+    <xsl:template match="html[not(@lang) and descendant::meta[@http-equiv='content-language']]">
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:attribute name="lang" select="descendant::meta[@http-equiv='content-language'][1]/@content"/>
+            <xsl:apply-templates select="node()"/>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
         <xd:desc>This is a temporary implementation of handling for the style element.
         We will need to enhance this to allow for CORS-friendly processing which would
         externalize the stylesheet.</xd:desc>
