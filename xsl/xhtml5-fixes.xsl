@@ -86,7 +86,7 @@
     <xd:doc>
         <xd:desc>Attributes no longer needed.</xd:desc>
     </xd:doc>
-    <xsl:template match="script/@language | script/@LANGUAGE | @*[local-name() = $deadAttNames]"/>
+    <xsl:template match="script/@language | script/@LANGUAGE | script/@type | @*[local-name() = $deadAttNames]"/>
     
     <xd:doc>
         <xd:desc>When we meet an element that carries obsolete attributes, we
@@ -144,7 +144,7 @@
         but the CDATA wrapper itself needs to be commented out in JS, then the 
         JS code itself needs to be commented out for XML purposes.</xd:desc>
     </xd:doc>
-    <xsl:template match="script[not(@source)]">
+    <xsl:template match="script[not(@source) and not(contains(., '[CDATA['))]">
         <xsl:copy>
             <xsl:apply-templates select="@*"/>
             <xsl:text disable-output-escaping="yes">//&lt;![CDATA[</xsl:text>
@@ -152,6 +152,17 @@
                 <xsl:sequence select="."/>
             </xsl:comment>   
             <xsl:text disable-output-escaping="yes">//]]&gt;</xsl:text>
+        </xsl:copy>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>When the script element already has appropriate CDATA 
+        handling, we just need to output it appropriately.</xd:desc>
+    </xd:doc>
+    <xsl:template match="script[not(@source) and contains(., '[CDATA[')]">
+        <xsl:copy>
+            <xsl:apply-templates select="@*"/>
+            <xsl:value-of select="." disable-output-escaping="yes"/>
         </xsl:copy>
     </xsl:template>
     

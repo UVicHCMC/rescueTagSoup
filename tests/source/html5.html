@@ -12,6 +12,21 @@
                 font-family: sans-serif;
                 }
         </style>
+        <!-- script element with @type (to be removed) and without cdata escaping. -->
+        <script type="text/javascript">
+            
+            window.addEventListener('load', (event) => {console.log("Page loaded #1.");});
+            
+        </script>
+        <!-- script element that already has cdata escaping. -->
+        <script>
+            //<![CDATA[<!--
+            
+            window.addEventListener('load', (event) => {console.log('Page loaded #2.');})
+            
+        -->//]]>
+        </script>
+        
     </head>
     <body>
         <h1>Test of plain HTML5</h1>
