@@ -74,7 +74,7 @@
             <style>
                 <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
                 <xsl:for-each select="parent::html/body//descendant-or-self::*[@*[local-name() = $deadAttNames]]">
-                    <xsl:sequence select="'&#x0a;.c_' || generate-id() || '{'"/>
+                    <xsl:sequence select="'&#x0a;' || local-name() || '.c_' || generate-id() || '{'"/>
                         <xsl:apply-templates select="@*[local-name() = $deadAttNamesCurrent]" mode="css"/>
                         <xsl:apply-templates select="@*[local-name() = $deadAttNamesDesc]" mode="css"/>
                     <xsl:sequence select="'&#x0a;}'"/>
@@ -86,7 +86,7 @@
     <xd:doc>
         <xd:desc>Attributes no longer needed.</xd:desc>
     </xd:doc>
-    <xsl:template match="script/@language | script/@LANGUAGE | script/@type | @*[local-name() = $deadAttNames] | a/descendant::*/@tabindex"/>
+    <xsl:template match="script/@language | script/@LANGUAGE | script/@type | a/descendant::*/@tabindex"/>
     
     <xd:doc>
         <xd:desc>When we meet an element that carries obsolete attributes, we
@@ -106,6 +106,7 @@
                     <xsl:apply-templates select="@*[not(local-name() eq 'class')]"/>
                     <xsl:attribute name="class" select="string-join(('c_' || generate-id(), @class), ' ')"/>
                     <xsl:attribute name="alt" select="if (@title) then @title else if (@src) then @src else '[Alt attribute is required.]'"/>
+                    <xsl:apply-templates select="@*[not(local-name() = 'class')]"/>
                 </xsl:copy>
             </xsl:when>
             <xsl:otherwise>
@@ -226,15 +227,75 @@
     <xd:doc>
         <xd:desc>Default low-priority do-nothing to suppress stuff.</xd:desc>
     </xd:doc>
-    <xsl:template match="@*[local-name() = $deadAttNames]" mode="#all" priority="-1"/>
+    <xsl:template match="@*[local-name() = $deadAttNames][not(parent::img and local-name() = ('width', 'height'))]" mode="#all" priority="-1"/>
     
     <xd:doc>
         <xd:desc>The border attribute just had 1 or 0 for on or off.</xd:desc>
     </xd:doc>
     <xsl:template match="@border" mode="css">
         <xsl:if test=". = '1'">
-            <xsl:sequence select="'&#x0a; border: solid 1px black'"/>
+            <xsl:sequence select="'&#x0a; border: solid 1px black;'"/>
         </xsl:if>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The width and height attributes are converted UNLESS they're on the 
+            img element.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@width[not(parent::img)] | height[not(parent::img)]" mode="css">
+        <xsl:sequence select="'&#x0a; ' || local-name() || ': ' || . || ';'"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The bgcolor attribute converts into straightforward CSS.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@bgcolor" mode="css">
+        <xsl:sequence select="'&#x0a; background-color: ' || . || ';'"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The valign should (I think) convert into straightforward CSS.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@valign" mode="css">
+        <xsl:sequence select="'&#x0a; vertical-align: ' || lower-case(.) || ';'"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The align attribute is closest to text-align when it's
+            not on an img.</xd:desc>
+    </xd:doc>
+    <xsl:template match="@align[not(parent::img)]" mode="css">
+        <xsl:variable name="val" as="xs:string" select="lower-case(.)"/>
+        <xsl:choose>
+            <xsl:when test="$val = ('left', 'center', 'right', 'justify')">
+                <xsl:sequence select="'&#x0a; text-align: ' || $val || ';'"/>
+            </xsl:when>
+            <xsl:when test="$val = 'middle'">
+                <xsl:sequence select="'&#x0a; vertical-align: ' || $val || ';'"/>
+            </xsl:when>
+        </xsl:choose>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The align attribute is goes in all dimensions when it's
+            on an img.</xd:desc>
+    </xd:doc>
+    <xsl:template match="img/@align" mode="css">
+        <xsl:variable name="val" as="xs:string" select="lower-case(.)"/>
+        <xsl:choose>
+            <xsl:when test="$val = 'top'">
+                <xsl:sequence select="'&#x0a; vertical-align: top;'"/>
+            </xsl:when>
+            <xsl:when test="$val = 'middle'">
+                <xsl:sequence select="'&#x0a; vertical-align: middle;'"/>
+            </xsl:when>
+            <xsl:when test="$val = 'left'">
+                <xsl:sequence select="'&#x0a; float: left;'"/>
+            </xsl:when>
+            <xsl:when test="$val = 'right'">
+                <xsl:sequence select="'&#x0a; float: right;'"/>
+            </xsl:when>
+        </xsl:choose>
     </xsl:template>
     
 </xsl:stylesheet>
