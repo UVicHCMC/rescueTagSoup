@@ -233,9 +233,14 @@
         <xd:desc>The border attribute just had 1 or 0 for on or off.</xd:desc>
     </xd:doc>
     <xsl:template match="@border" mode="css">
-        <xsl:if test=". = '1'">
-            <xsl:sequence select="'&#x0a; border: solid 1px black;'"/>
-        </xsl:if>
+        <xsl:choose>
+            <xsl:when test=". = '1'">
+                <xsl:sequence select="'&#x0a; border: solid 1px black;'"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:sequence select="'&#x0a; border-style: none;'"/>
+            </xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
     
     <xd:doc>
@@ -296,6 +301,57 @@
                 <xsl:sequence select="'&#x0a; float: right;'"/>
             </xsl:when>
         </xsl:choose>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The FONT/@SIZE attribute needs coercion into modern
+        font sizes.</xd:desc>
+    </xd:doc>
+    <xsl:template match="font/@size" mode="css">
+        <xsl:choose>
+            <xsl:when test=". = '1'">
+                <xsl:sequence select="'&#x0a; font-size: xx-small;'"/>
+            </xsl:when>
+            <xsl:when test=". = '2'">
+                <xsl:sequence select="'&#x0a; font-size: x-small;'"/>
+            </xsl:when>
+            <xsl:when test=". = '3'">
+                <xsl:sequence select="'&#x0a; font-size: small;'"/>
+            </xsl:when>
+            <xsl:when test=". = '4'">
+                <xsl:sequence select="'&#x0a; font-size: medium;'"/>
+            </xsl:when>
+            <xsl:when test=". = '5'">
+                <xsl:sequence select="'&#x0a; font-size: large;'"/>
+            </xsl:when>
+            <xsl:when test=". = '6'">
+                <xsl:sequence select="'&#x0a; font-size: x-large;'"/>
+            </xsl:when>
+            <xsl:when test=". = '7'">
+                <xsl:sequence select="'&#x0a; font-size: xx-large;'"/>
+            </xsl:when>
+        </xsl:choose>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>The FONT/@FACE attribute should convert directly.</xd:desc>
+    </xd:doc>
+    <xsl:template match="font/@face" mode="css">
+        <xsl:sequence select="'&#x0a;font-family: ' || . || ';'"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Table cellpadding is realized on descendant td elements.</xd:desc>
+    </xd:doc>
+    <xsl:template match="table/@cellpadding" mode="css">
+        <xsl:sequence select="'&#x0a;td{' || 'padding: ' || . || 'px;}'"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>Table cellspacing is realized on descendant td elements.</xd:desc>
+    </xd:doc>
+    <xsl:template match="table/@cellspacing" mode="css">
+        <xsl:sequence select="'&#x0a;td{' || 'margin: ' || . || 'px;}'"/>
     </xsl:template>
     
 </xsl:stylesheet>
