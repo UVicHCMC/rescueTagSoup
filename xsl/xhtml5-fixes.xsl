@@ -71,14 +71,20 @@
     <xsl:template match="html[body/descendant-or-self::*/@*[local-name() = $deadAttNames] or descendant::center]/head">
         <xsl:copy>
             <xsl:apply-templates select="@*|node()"/>
-            <style>
+            <xsl:variable name="css" as="xs:string+">
                 <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
                 <xsl:for-each select="parent::html/body//descendant-or-self::*[@*[local-name() = $deadAttNames]]">
                     <xsl:sequence select="'&#x0a;' || local-name() || '.c_' || generate-id() || '{'"/>
-                        <xsl:apply-templates select="@*[local-name() = $deadAttNamesCurrent]" mode="css"/>
-                        <xsl:apply-templates select="@*[local-name() = $deadAttNamesDesc]" mode="css"/>
+                    <xsl:apply-templates select="@*[local-name() = $deadAttNamesCurrent]" mode="css"/>
+                    <xsl:apply-templates select="@*[local-name() = $deadAttNamesDesc]" mode="css"/>
                     <xsl:sequence select="'&#x0a;}'"/>
                 </xsl:for-each>
+            </xsl:variable>
+            
+            <style>
+                <xsl:comment>
+                    <xsl:value-of disable-output-escaping="yes" select="$css"/>
+                </xsl:comment>
             </style>
         </xsl:copy>
     </xsl:template>
@@ -191,6 +197,14 @@
             the root html element. Also suppress obsolete IE-related meta-tag.</xd:desc>
     </xd:doc>
     <xsl:template match="meta[@http-equiv=('content-language', 'X-UA-Compatible')]"/>
+    
+    <xd:doc>
+        <xd:desc>NOTE: THIS FAILS BECAUSE SAXON INSERTS IT AGAIN. Think about alternatives.
+            Let's default to the meta/@charset instead of the old http-equiv thing.</xd:desc>
+    </xd:doc>
+    <xsl:template match="meta[not(@charset) and contains(@content, 'charset')]">
+        <meta charset="{substring-after(@content, '=')}"/>
+    </xsl:template>
     
     <xd:doc>
         <xd:desc>Suppress language specification using a meta tag.</xd:desc>
@@ -344,14 +358,14 @@
         <xd:desc>Table cellpadding is realized on descendant td elements.</xd:desc>
     </xd:doc>
     <xsl:template match="table/@cellpadding" mode="css">
-        <xsl:sequence select="'&#x0a;td{' || 'padding: ' || . || 'px;}'"/>
+        <xsl:sequence select="'&#x0a;&amp;tr&amp;td{' || 'padding: ' || . || 'px;}'"/>
     </xsl:template>
     
     <xd:doc>
         <xd:desc>Table cellspacing is realized on descendant td elements.</xd:desc>
     </xd:doc>
     <xsl:template match="table/@cellspacing" mode="css">
-        <xsl:sequence select="'&#x0a;td{' || 'margin: ' || . || 'px;}'"/>
+        <xsl:sequence select="'&#x0a;&amp;tr&amp;td{' || 'margin: ' || . || 'px;}'"/>
     </xsl:template>
     
 </xsl:stylesheet>
