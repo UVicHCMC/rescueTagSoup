@@ -127,6 +127,32 @@
         </java>
     </target>
     
+    <target name="findExternalResources">
+        <description>
+            TARGET findExternalResources
+            This target parses through all the now-XHTML temporary
+            files and compiles a lookup table of all the resources 
+            which have been externally referenced (CSS, JS, images
+            and so on) using full http requests in the HTML and CSS.
+            The lookup is in the form of an XHTML file which can
+            be used in a process to replace external links with local
+            links. The process also compiles a command-line script which
+            will retrieve all of these files and place them in a 
+            folder called "externals" in the output folder.
+        </description>
+        <echo message="${echo.separator}"/>
+        <echo message="Mapping external references..."/>
+        <java fork="true" classname="net.sf.saxon.Transform" classpath="${saxon}" failonerror="true">
+            <jvmarg value="-Xmx1024m"/>
+            <arg value="-s:${basedir}/xsl/map-externals.xsl"/>
+            <arg value="-xsl:${basedir}/xsl/map-externals.xsl"/>
+            <arg value="xhtmlFolder=${basedir}/temp"/>
+            <arg value="sourceFolder=${source}"/>
+            <arg value="outputFolder=${basedir}/temp/externals"/>
+            <arg value="--suppressXsltNamespaceCheck:on"/>
+        </java>
+    </target>
+    
     <target name="fixAllFiles">
         <description>
             TARGET fixeAllFiles 
@@ -187,6 +213,9 @@
         
         <!-- Do initial conversion. -->
         <antcall target="parseAllFiles"/>
+        
+        <!-- Map any external links. -->
+        <antcall target="findExternalResources"/>
         
         <!-- Run remediation XSLT. -->
         <antcall target="fixAllFiles"/>
