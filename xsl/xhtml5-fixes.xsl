@@ -16,6 +16,8 @@
             from the initial conversion of HTML tagsoup to XHTML; the objective is 
             to get the output as close as possible to valid XHTML5.</xd:p>
         </xd:desc>
+        <xd:param name="outputFile" as="xs:string">We need to know the output filename so we can use 
+            it to create resource files (JS and CSS).</xd:param>
     </xd:doc>
     
     <xd:doc>
@@ -33,6 +35,17 @@
         <xd:desc>Special css mode does not cascade.</xd:desc>
     </xd:doc>
     <xsl:mode name="css" on-no-match="deep-skip"/>
+    
+    <xd:doc>
+        <xd:desc>We need to know the output filename so we can use 
+        it to create resource files (JS and CSS).</xd:desc>
+    </xd:doc>
+    <xsl:param name="outputFile" as="xs:string" select="'temp/temp.html'"/>
+    
+    <xd:doc>
+        <xd:desc>We need the folder for the output file.</xd:desc>
+    </xd:doc>
+    <xsl:variable name="outputFolder" as="xs:string" select="replace($outputFile, '[^/]+$', '')"/>
     
     <xd:doc>
         <xd:desc>We need a sequence of obsolete attribute names so that we can 
@@ -61,6 +74,7 @@
         <xd:desc>The default template kicks everything off.</xd:desc>
     </xd:doc>
     <xsl:template match="/">
+        <xsl:message>Output file is {$outputFile}; output folder is {$outputFolder}...</xsl:message>
         <xsl:apply-templates/>
     </xsl:template>
     
@@ -81,11 +95,14 @@
                 </xsl:for-each>
             </xsl:variable>
             
-            <style>
-                <xsl:comment>
-                    <xsl:value-of disable-output-escaping="yes" select="$css"/>
-                </xsl:comment>
-            </style>
+            <xsl:result-document method="text" href="{$outputFolder || 'obsolete_atts.css'}">
+                <xsl:text>/* Generated CSS to handle obsolete HTML attributes. */
+                
+                </xsl:text>
+                <xsl:sequence select="$css"/>
+            </xsl:result-document>
+            
+            <link rel="stylesheet" href="obsolete_atts.css"/>
         </xsl:copy>
     </xsl:template>
     

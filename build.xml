@@ -181,6 +181,7 @@
             <arg value="-s:${wellFormedFile}"/>
             <arg value="-xsl:${basedir}/xsl/xhtml5-fixes.xsl"/>
             <arg value="-o:${outputFile}/"/>
+            <arg value="outputFile=${outputFile}"/>
             <arg value="--suppressXsltNamespaceCheck:on"/>
         </java>
     </target>
