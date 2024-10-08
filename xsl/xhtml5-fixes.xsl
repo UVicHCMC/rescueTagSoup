@@ -258,7 +258,7 @@
         <xsl:variable name="content" as="xs:string" select="xs:string(.)"/>
         <xsl:variable name="jsFileName" as="xs:string" select="$outputNameNoSuffix || '_' || generate-id() || '.js'"/>
         <xsl:variable name="noCommentContent" as="xs:string" 
-            select="replace(replace($content, '^\s*//\s*(&lt;!\[CDATA\[)?\s*&lt;!--', ''), '--&gt;\s*//\s*(\]\]>)?\s*$', '')"/>
+            select="replace(replace($content, '^\s*//\s*(&lt;!\[CDATA\[)?\s*(&lt;!--)?', ''), '(--&gt;)?\s*//\s*(\]\]>)?\s*$', '')"/>
         <xsl:result-document href="{$outputFolder || '/' || $jsFileName}">
             <xsl:value-of select="$noCommentContent" disable-output-escaping="yes"/>
         </xsl:result-document>
