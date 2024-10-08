@@ -15,9 +15,15 @@
             <xd:p>This stylesheet is designed to fix a range of known issues resulting
             from the initial conversion of HTML tagsoup to XHTML; the objective is 
             to get the output as close as possible to valid XHTML5.</xd:p>
+            <xd:p>The Ant calling target pre-calculates various useful file- and 
+            path-related strings because it's easier to do there. Using these, 
+            we can output JS and CSS files with lower risk of filename collision.</xd:p>
         </xd:desc>
-        <xd:param name="outputFile" as="xs:string">We need to know the output filename so we can use 
-            it to create resource files (JS and CSS).</xd:param>
+        <xd:param name="outputFile" as="xs:string">The full path to the output file being created.</xd:param>
+        <xd:param name="outputFileName" as="xs:string">The plain file name of the document (no path).</xd:param>
+        <xd:param name="outputFolder" as="xs:string">The folder into which the output file will be placed.</xd:param>
+        <xd:param name="outputNameNoSuffix" as="xs:string">The base filename, without extension, of the output file.</xd:param>
+        
     </xd:doc>
     
     <xd:doc>
@@ -37,15 +43,18 @@
     <xsl:mode name="css" on-no-match="deep-skip"/>
     
     <xd:doc>
-        <xd:desc>We need to know the output filename so we can use 
-        it to create resource files (JS and CSS).</xd:desc>
+        <xd:desc>Another special mode for style elements.</xd:desc>
     </xd:doc>
-    <xsl:param name="outputFile" as="xs:string" select="'temp/temp.html'"/>
+    <xsl:mode name="style" on-no-match="shallow-copy"/>
     
     <xd:doc>
-        <xd:desc>We need the folder for the output file.</xd:desc>
+        <xd:desc>Parameters documented above</xd:desc>
     </xd:doc>
-    <xsl:variable name="outputFolder" as="xs:string" select="replace($outputFile, '[^/]+$', '')"/>
+    <xsl:param name="outputFile" as="xs:string" select="'temp/temp.html'"/>
+    <xsl:param name="outputFileName" as="xs:string" select="'temp.html'"/>
+    <xsl:param name="outputFolder" as="xs:string" select="'temp'"/>
+    <xsl:param name="outputNameNoSuffix" as="xs:string" select="'temp'"/>
+    
     
     <xd:doc>
         <xd:desc>We need a sequence of obsolete attribute names so that we can 
@@ -84,7 +93,12 @@
     </xd:doc>
     <xsl:template match="html[body/descendant-or-self::*/@*[local-name() = $deadAttNames] or descendant::center]/head">
         <xsl:copy>
+            <!-- Process all regular content. -->
             <xsl:apply-templates select="@*|node()"/>
+            
+            <!-- Turn any style elements anywhere in the document into external linked CSS files. -->
+            <xsl:apply-templates select="parent::html/descendant::style" mode="style"/>
+            
             <xsl:variable name="css" as="xs:string+">
                 <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
                 <xsl:for-each select="parent::html/body//descendant-or-self::*[@*[local-name() = $deadAttNames]]">
@@ -95,14 +109,14 @@
                 </xsl:for-each>
             </xsl:variable>
             
-            <xsl:result-document method="text" href="{$outputFolder || 'obsolete_atts.css'}">
+            <xsl:result-document method="text" href="{$outputFolder || '/' || $outputNameNoSuffix || '_obsolete_atts.css'}">
                 <xsl:text>/* Generated CSS to handle obsolete HTML attributes. */
                 
                 </xsl:text>
                 <xsl:sequence select="$css"/>
             </xsl:result-document>
             
-            <link rel="stylesheet" href="obsolete_atts.css"/>
+            <link rel="stylesheet" href="{$outputNameNoSuffix || '_obsolete_atts.css'}"/>
         </xsl:copy>
     </xsl:template>
     
@@ -235,17 +249,21 @@
     </xsl:template>
     
     <xd:doc>
-        <xd:desc>This is a temporary implementation of handling for the style element.
-        We will need to enhance this to allow for CORS-friendly processing which would
-        externalize the stylesheet.</xd:desc>
+        <xd:desc>By default, we ignore style elements, because we process them 
+        all together in the head.</xd:desc>
     </xd:doc>
-    <xsl:template match="style">
-        <xsl:copy>
-            <xsl:apply-templates select="@*"/>
-            <xsl:comment>
-                <xsl:apply-templates select="node()"/>
-            </xsl:comment>
-        </xsl:copy>
+    <xsl:template match="style"/>
+    
+    <xd:doc>
+        <xd:desc>In the special style mode, we externalize any stylesheet for CORS-friendly output.</xd:desc>
+    </xd:doc>
+    <xsl:template match="style" mode="style">
+        <xsl:variable name="content" as="xs:string" select="string-join((descendant::text() | descendant::comment()/text()), '')"/>
+        <xsl:variable name="cssFileName" as="xs:string" select="$outputNameNoSuffix || '_' || generate-id() || '.css'"/>
+        <xsl:result-document href="{$outputFolder || '/' || $cssFileName}">
+            <xsl:sequence select="$content"/>
+        </xsl:result-document>
+        <link rel="stylesheet" href="{$cssFileName}"/>
     </xsl:template>
     
     <xd:doc>

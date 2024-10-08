@@ -171,17 +171,25 @@
             TARGET fixOneFile
             This target is passed the path to a parsed and now well-formed XHTML
             file, and processes it with Saxon to perform a range of fixes for 
-            known issues.
+            known issues. We pre-calculate and supply a range of useful filename
+            and path-related parameters because these are a little easier to calculate in 
+            the Ant context than in the XSLT.
         </description>
         <echo message="${echo.separator}"/>
         <propertyregex property="outputFile" input="${wellFormedFile}" regexp="${temp}" replace="${output}"/>
         <echo message="Remediating known possible issues in the file ${wellFormedFile} to create ${outputFile}..."/>
+        <dirname property="outputFolder" file="${outputFile}"/>
+        <basename property="outputFileName" file="${outputFile}"/>
+        <propertyregex property="outputNameNoSuffix" input="${outputFileName}" regexp="\.[HhTtMmLl]+$" replace=""/>
         <java fork="true" classname="net.sf.saxon.Transform" classpath="${saxon}" failonerror="true">
             <jvmarg value="-Xmx1024m"/>
             <arg value="-s:${wellFormedFile}"/>
             <arg value="-xsl:${basedir}/xsl/xhtml5-fixes.xsl"/>
             <arg value="-o:${outputFile}/"/>
             <arg value="outputFile=${outputFile}"/>
+            <arg value="outputFileName=${outputFileName}"/>
+            <arg value="outputFolder=${outputFolder}"/>
+            <arg value="outputNameNoSuffix=${outputNameNoSuffix}"/>
             <arg value="--suppressXsltNamespaceCheck:on"/>
         </java>
     </target>
