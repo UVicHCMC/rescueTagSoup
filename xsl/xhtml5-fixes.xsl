@@ -83,7 +83,7 @@
         <xd:desc>The default template kicks everything off.</xd:desc>
     </xd:doc>
     <xsl:template match="/">
-        <xsl:message>Output file is {$outputFile}; output folder is {$outputFolder}...</xsl:message>
+        <xsl:message>Output file is {$outputFile}; output folder is {$outputFolder}; base file name is {$outputNameNoSuffix}...</xsl:message>
         <xsl:apply-templates/>
     </xsl:template>
     
@@ -91,13 +91,14 @@
         <xd:desc>We have a lot of work to do in the head tag, if there are 
         obsolete style-like attributes from HTML4 and below.</xd:desc>
     </xd:doc>
-    <xsl:template match="html[body/descendant-or-self::*/@*[local-name() = $deadAttNames] or descendant::center]/head">
+    <xsl:template match="html/head">
         <xsl:copy>
             <!-- Process all regular content. -->
             <xsl:apply-templates select="@*|node()"/>
             
             <!-- Turn any style elements anywhere in the document into external linked CSS files. -->
-            <xsl:apply-templates select="parent::html/descendant::style" mode="style"/>
+            <xsl:message>There are {count(//style)} style elements that will be turned into external files...</xsl:message>
+            <xsl:apply-templates select="//style" mode="style"/>
             
             <xsl:variable name="css" as="xs:string+">
                 <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
@@ -260,8 +261,9 @@
     <xsl:template match="style" mode="style">
         <xsl:variable name="content" as="xs:string" select="string-join((descendant::text() | descendant::comment()/text()), '')"/>
         <xsl:variable name="cssFileName" as="xs:string" select="$outputNameNoSuffix || '_' || generate-id() || '.css'"/>
+        <xsl:variable name="noCommentContent" as="xs:string" select="replace(replace($content, '^\s*(&amp;lt;)|(&lt;)!--', ''), '--((&amp;gt;)|(&gt;)|(>))\s*$', '')"/>
         <xsl:result-document href="{$outputFolder || '/' || $cssFileName}">
-            <xsl:sequence select="$content"/>
+            <xsl:sequence select="$noCommentContent"/>
         </xsl:result-document>
         <link rel="stylesheet" href="{$cssFileName}"/>
     </xsl:template>
