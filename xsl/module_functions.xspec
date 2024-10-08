@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x:description xmlns:x="http://www.jenitennison.com/xslt/xspec"
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:hcmc="http://hcmc.uvic.ca/ns"
+    stylesheet="module_functions.xsl">
+    <x:scenario label="Scenarios for testing function fix-bad-filename">
+        
+        <x:scenario label="Leaving good filename unchanged">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'index.html'"/>
+            </x:call>
+            <x:expect label="No deletion." select="'index.html'"/>
+        </x:scenario>
+        <x:scenario label="Leaving good filename unchanged">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'index.htm'"/>
+            </x:call>
+            <x:expect label="No deletion." select="'index.htm'"/>
+        </x:scenario>
+        <x:scenario label="Removing nested extensions">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'index.html.html'"/>
+            </x:call>
+            <x:expect label="First extension should be gone." select="'index.html'"/>
+        </x:scenario>
+    </x:scenario>
+</x:description>

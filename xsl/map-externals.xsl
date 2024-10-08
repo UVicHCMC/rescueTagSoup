@@ -6,6 +6,7 @@
     exclude-result-prefixes="#all"
     xmlns="http://www.w3.org/1999/xhtml"
     xpath-default-namespace="http://www.w3.org/1999/xhtml"
+    xmlns:hcmc="http://hcmc.uvic.ca/ns"
     expand-text="yes"
     version="3.0">
     <xd:doc scope="stylesheet">
