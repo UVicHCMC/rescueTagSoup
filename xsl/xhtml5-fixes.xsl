@@ -45,7 +45,7 @@
     <xd:doc>
         <xd:desc>Another special mode for style elements.</xd:desc>
     </xd:doc>
-    <xsl:mode name="style" on-no-match="shallow-copy"/>
+    <xsl:mode name="makeExternal" on-no-match="shallow-copy"/>
     
     <xd:doc>
         <xd:desc>Parameters documented above</xd:desc>
@@ -98,7 +98,11 @@
             
             <!-- Turn any style elements anywhere in the document into external linked CSS files. -->
             <xsl:message>There are {count(//style)} style elements that will be turned into external files...</xsl:message>
-            <xsl:apply-templates select="//style" mode="style"/>
+            <xsl:apply-templates select="//style" mode="makeExternal"/>
+            
+            <!-- Turn any script elements anywhere in the document into external linked JS files. -->
+            <xsl:message>There are {count(//script)} script elements that will be turned into external files...</xsl:message>
+            <xsl:apply-templates select="//script" mode="makeExternal"/>
             
             <xsl:variable name="css" as="xs:string+">
                 <xsl:sequence select="'&#x0a;.centered{&#x0a;text-align: center;&#x0a;margin-left: auto;&#x0a;margin-right: auto;&#x0a;}'"/>
@@ -179,33 +183,6 @@
     </xsl:template>
     
     <xd:doc>
-        <xd:desc>The script element is special: we need it to be output as CDATA,
-        but the CDATA wrapper itself needs to be commented out in JS, then the 
-        JS code itself needs to be commented out for XML purposes.</xd:desc>
-    </xd:doc>
-    <xsl:template match="script[not(@src) and not(contains(., '[CDATA['))]">
-        <xsl:copy>
-            <xsl:apply-templates select="@*"/>
-            <xsl:text disable-output-escaping="yes">//&lt;![CDATA[</xsl:text>
-            <xsl:comment>
-                <xsl:sequence select="."/>
-            </xsl:comment>   
-            <xsl:text disable-output-escaping="yes">//]]&gt;</xsl:text>
-        </xsl:copy>
-    </xsl:template>
-    
-    <xd:doc>
-        <xd:desc>When the script element already has appropriate CDATA 
-        handling, we just need to output it appropriately.</xd:desc>
-    </xd:doc>
-    <xsl:template match="script[not(@src) and contains(., '[CDATA[')]">
-        <xsl:copy>
-            <xsl:apply-templates select="@*"/>
-            <xsl:value-of select="." disable-output-escaping="yes"/>
-        </xsl:copy>
-    </xsl:template>
-    
-    <xd:doc>
         <xd:desc>Attributes whose values should become lower-case.</xd:desc>
     </xd:doc>
     <xsl:template match="input/@TYPE | input/@type">
@@ -256,16 +233,36 @@
     <xsl:template match="style"/>
     
     <xd:doc>
-        <xd:desc>In the special style mode, we externalize any stylesheet for CORS-friendly output.</xd:desc>
+        <xd:desc>In the special makeExternal mode, we externalize any stylesheet for CORS-friendly output.</xd:desc>
     </xd:doc>
-    <xsl:template match="style" mode="style">
+    <xsl:template match="style" mode="makeExternal">
         <xsl:variable name="content" as="xs:string" select="string-join((descendant::text() | descendant::comment()/text()), '')"/>
         <xsl:variable name="cssFileName" as="xs:string" select="$outputNameNoSuffix || '_' || generate-id() || '.css'"/>
         <xsl:variable name="noCommentContent" as="xs:string" select="replace(replace($content, '^\s*(&amp;lt;)|(&lt;)!--', ''), '--((&amp;gt;)|(&gt;)|(>))\s*$', '')"/>
         <xsl:result-document href="{$outputFolder || '/' || $cssFileName}">
-            <xsl:sequence select="$noCommentContent"/>
+            <xsl:value-of select="$noCommentContent" disable-output-escaping="yes"/>
         </xsl:result-document>
         <link rel="stylesheet" href="{$cssFileName}"/>
+    </xsl:template>
+    
+    <xd:doc>
+        <xd:desc>By default, we ignore script elements, because we process them 
+            all together in the head.</xd:desc>
+    </xd:doc>
+    <xsl:template match="script[not(@src)]"/>
+    
+    <xd:doc>
+        <xd:desc>In the special makeExternal mode, we externalize any script element for CORS-friendly output.</xd:desc>
+    </xd:doc>
+    <xsl:template match="script[not(@src)]" mode="makeExternal">
+        <xsl:variable name="content" as="xs:string" select="xs:string(.)"/>
+        <xsl:variable name="jsFileName" as="xs:string" select="$outputNameNoSuffix || '_' || generate-id() || '.js'"/>
+        <xsl:variable name="noCommentContent" as="xs:string" 
+            select="replace(replace($content, '^\s*//\s*(&lt;!\[CDATA\[)?\s*&lt;!--', ''), '--&gt;\s*//\s*(\]\]>)?\s*$', '')"/>
+        <xsl:result-document href="{$outputFolder || '/' || $jsFileName}">
+            <xsl:value-of select="$noCommentContent" disable-output-escaping="yes"/>
+        </xsl:result-document>
+        <script src="{$jsFileName}"/>
     </xsl:template>
     
     <xd:doc>
