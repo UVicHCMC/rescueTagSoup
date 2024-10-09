@@ -46,17 +46,26 @@
         <xsl:param name="fileName" as="xs:string"/>
         <!-- The first phase removes any embedded file extension, since there's
              a final extension anyway. -->
-        <xsl:variable name="noNestedExtension" as="xs:string" select="
-            if (matches($fileName, '\.html.{2,}', 'i')) then replace($fileName, '\.html(.+)', '$1', 'i')
-            else if (matches($fileName, '\.htm.{2,}', 'i')) then replace($fileName, '\.htm(.+)', '$1', 'i') 
+        <xsl:variable name="noRepeatedExtension" as="xs:string" select="
+            if (matches($fileName, '\.html.*\.html?', 'i')) then replace($fileName, '\.html(.+)', '$1', 'i')
+            else if (matches($fileName, '\.htm.*\.html?', 'i')) then replace($fileName, '\.htm(.+)', '$1', 'i') 
             else $fileName"/>
         
-        <!-- We need a mapping of unwanted characters to decent replacements. -->
+        <!-- Now we can move any embedded extension to the end, for e.g. image files followed by a query string. -->
+        <xsl:variable name="extensionToEnd" as="xs:string" 
+            select="replace($noRepeatedExtension, '(\.[a-zA-Z]+)(\?.+)$', '$2$1')"/>
         
+        <!-- We need a mapping of unwanted characters to decent replacements. -->
+        <xsl:variable name="noBadChars" as="xs:string"
+            select="replace(
+                    replace(
+                    replace($extensionToEnd, '\?', '_q_'), 
+                            '=', '_eq_'),
+                            '&amp;', '_n_')"/>
         
         
         <!-- Placeholder. -->
-        <xsl:sequence select="$noNestedExtension"/>
+        <xsl:sequence select="$noBadChars"/>
     </xsl:function>
     
 </xsl:stylesheet>

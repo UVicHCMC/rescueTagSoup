@@ -23,5 +23,24 @@
             </x:call>
             <x:expect label="First extension should be gone." select="'index.html'"/>
         </x:scenario>
+        <x:scenario label="Simple query string">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'index.html?fix=me&amp;also=me'"/>
+            </x:call>
+            <x:expect label="Acceptable filename" select="'index_q_fix_eq_me_n_also_eq_me.html'"/>
+        </x:scenario>
+        <x:scenario label="Genuine jpg example">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'janelle_biz_crop.jpg?w=300'"/>
+            </x:call>
+            <x:expect label="Acceptable filename" select="'janelle_biz_crop_q_w_eq_300.jpg'"/>
+        </x:scenario>
+        
+        <x:scenario label="Genuine jpg example">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'janelle_and_karl.jpg?w=300&amp;h=224'"/>
+            </x:call>
+            <x:expect label="Acceptable filename" select="'janelle_and_karl_q_w_eq_300_n_h_eq_224.jpg'"/>
+        </x:scenario>
     </x:scenario>
 </x:description>
