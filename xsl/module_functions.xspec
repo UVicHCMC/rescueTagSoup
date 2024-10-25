@@ -42,5 +42,12 @@
             </x:call>
             <x:expect label="Acceptable filename" select="'janelle_and_karl_q_w_eq_300_n_h_eq_224.jpg'"/>
         </x:scenario>
+        
+        <x:scenario label="Complete path example">
+            <x:call function="hcmc:fix-bad-filename">
+                <x:param name="fileName" select="'folder with spaces/another==garbage??name/file.html?thing=x'"/>
+            </x:call>
+            <x:expect label="Acceptable path" select="'folder_with_spaces/another_eq__eq_garbage_q__q_name/file_q_thing_eq_x.html'"/>
+        </x:scenario>
     </x:scenario>
 </x:description>

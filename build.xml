@@ -76,19 +76,40 @@
         <include name="**/*.HTML"/>
     </fileset>
     
+    <!-- All output files. -->
+    <fileset id="allOutput" dir="${output}">
+        <include name="**/*"/>
+    </fileset>
+    
     <target name="clean">
         <description>
             TARGET clean:
             Removes old products in case this is required.
         </description>
         <echo message="${echo.separator}"/>
-        <echo message="Removing old products from the output folder..."/>
+        <echo message="Removing all existing content from the output folder..."/>
         <mkdir dir="${output}"/>
-        <delete includeemptydirs="false">
-            <fileset refid="outputHtml"/>
+        <delete includeemptydirs="true">
+            <fileset refid="allOutput"/>
         </delete>
         <delete dir="temp"/>
         <mkdir dir="temp"/>
+    </target>
+    
+    <target name="buildRenamingMap">
+        <description>
+            TARGET buildRenamingMap
+            The first phase of the process involves fixing any 
+            number of horrible file and folder names resulting
+            from the scraping process or from the source host 
+            process.
+        </description>
+        <echo message="${echo.separator}"/>
+        <echo message="Building a map to rename all bad file and folder names..."/>
+        <exec executable="find" output="temp/sourceFiles.txt">
+            <arg value="${source}"/>
+            <arg line="-type f"/>
+        </exec>
     </target>
     
     <target name="parseAllFiles">

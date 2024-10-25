@@ -49,6 +49,9 @@
         <xsl:variable name="noRepeatedExtension" as="xs:string" select="
             if (matches($fileName, '\.html.*\.html?', 'i')) then replace($fileName, '\.html(.+)', '$1', 'i')
             else if (matches($fileName, '\.htm.*\.html?', 'i')) then replace($fileName, '\.htm(.+)', '$1', 'i') 
+            else if (matches($fileName, '\.jpg.*\.jpg?', 'i')) then replace($fileName, '\.jpg(.+)', '$1', 'i') 
+            else if (matches($fileName, '\.jpeg.*\.jpeg?', 'i')) then replace($fileName, '\.jpeg(.+)', '$1', 'i') 
+            else if (matches($fileName, '\.png.*\.png?', 'i')) then replace($fileName, '\.png(.+)', '$1', 'i') 
             else $fileName"/>
         
         <!-- Now we can move any embedded extension to the end, for e.g. image files followed by a query string. -->
@@ -59,9 +62,11 @@
         <xsl:variable name="noBadChars" as="xs:string"
             select="replace(
                     replace(
+                    replace(
                     replace($extensionToEnd, '\?', '_q_'), 
                             '=', '_eq_'),
-                            '&amp;', '_n_')"/>
+                            '&amp;', '_n_'),
+                            '\s+', '_')"/>
         
         
         <!-- Placeholder. -->
