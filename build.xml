@@ -35,10 +35,10 @@
     </tstamp>
     
     <!-- Folder for incoming tagsoup HTML. -->
-    <property name="source" value="${basedir}/tests/source"/>
+    <property name="sourceFolder" value="${basedir}/tests/source"/>
     
     <!-- Folder for outgoing rescued XHTML5 -->
-    <property name="output" value="${basedir}/tests/output"/>
+    <property name="outputFolder" value="${basedir}/tests/output"/>
     
     <!-- Folder for temporary in-process files. -->
     <property name="temp" value="${basedir}/temp"/>
@@ -53,7 +53,7 @@
     <property name="htmlparser" value="${basedir}/lib/htmlparser-1.4.jar"/>
     
     <!-- Source HTML documents.  -->
-    <fileset id="sourceHtml" dir="${source}">
+    <fileset id="sourceHtml" dir="${sourceFolder}">
         <include name="**/*.htm"/>
         <include name="**/*.html"/>
         <include name="**/*.HTM"/>
@@ -69,7 +69,7 @@
     </fileset>
     
     <!-- Output XHTML documents. -->
-    <fileset id="outputHtml" dir="${output}">
+    <fileset id="outputHtml" dir="${outputFolder}">
         <include name="**/*.htm"/>
         <include name="**/*.html"/>
         <include name="**/*.HTM"/>
@@ -77,7 +77,7 @@
     </fileset>
     
     <!-- All output files. -->
-    <fileset id="allOutput" dir="${output}">
+    <fileset id="allOutput" dir="${outputFolder}">
         <include name="**/*"/>
     </fileset>
     
@@ -88,7 +88,7 @@
         </description>
         <echo message="${echo.separator}"/>
         <echo message="Removing all existing content from the output folder..."/>
-        <mkdir dir="${output}"/>
+        <mkdir dir="${outputFolder}"/>
         <delete includeemptydirs="true">
             <fileset refid="allOutput"/>
         </delete>
@@ -106,10 +106,20 @@
         </description>
         <echo message="${echo.separator}"/>
         <echo message="Building a map to rename all bad file and folder names..."/>
-        <exec executable="find" output="temp/sourceFiles.txt">
-            <arg value="${source}"/>
+        <exec executable="find" output="${basedir}/temp/sourceFiles.txt">
+            <arg value="${sourceFolder}"/>
             <arg line="-type f"/>
         </exec>
+        <java fork="true" classname="net.sf.saxon.Transform" classpath="${saxon}" failonerror="true">
+            <jvmarg value="-Xmx1024m"/>
+            <arg value="-s:${basedir}/xsl/map-renames.xsl"/>
+            <arg value="-xsl:${basedir}/xsl/map-renames.xsl"/>
+            <arg value="sourceListing=${basedir}/temp/sourceFiles.txt"/>
+            <arg value="sourceFolder=${sourceFolder}"/>
+            <arg value="outputFolder=${outputFolder}"/>
+            <arg value="outputScript=${outputFolder}/rename.sh"/>
+            <arg value="--suppressXsltNamespaceCheck:on"/>
+        </java>
     </target>
     
     <target name="parseAllFiles">
@@ -119,7 +129,7 @@
             through the parseOneFile target.
         </description>
         <!-- Just in case it doesn't exist yet. -->
-        <mkdir dir="${output}"/>
+        <mkdir dir="${outputFolder}"/>
         <foreach target="parseOneFile" param="sourceFile">
             <path>
                 <fileset refid="sourceHtml"/>
@@ -136,7 +146,7 @@
             java -cp htmlparser-1.4.jar nu.validator.htmlparser.tools.HTML2XML inputsoup.html output.html
         </description>
         <echo message="${echo.separator}"/>
-        <propertyregex property="outputFile" input="${sourceFile}" regexp="${source}" replace="${temp}"/>
+        <propertyregex property="outputFile" input="${sourceFile}" regexp="${sourceFolder}" replace="${temp}"/>
         <dirname property="outputDir" file="${outputFile}"/>
         <echo message="Parsing the file ${sourceFile} to create the file ${outputFile}..."/>
         <mkdir dir="${outputDir}"/>
@@ -168,7 +178,7 @@
             <arg value="-s:${basedir}/xsl/map-externals.xsl"/>
             <arg value="-xsl:${basedir}/xsl/map-externals.xsl"/>
             <arg value="xhtmlFolder=${basedir}/temp"/>
-            <arg value="sourceFolder=${source}"/>
+            <arg value="sourceFolder=${sourceFolder}"/>
             <arg value="outputFolder=${basedir}/temp/externals"/>
             <arg value="--suppressXsltNamespaceCheck:on"/>
         </java>
@@ -240,6 +250,8 @@
             This runs the entire build process.
         </description>
         <antcall target="clean"/>
+        
+        <antcall target="buildRenamingMap"/>
         
         <!-- Do initial conversion. -->
         <antcall target="parseAllFiles"/>

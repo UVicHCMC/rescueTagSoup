@@ -7,6 +7,7 @@
     xmlns="http://www.w3.org/1999/xhtml"
     xpath-default-namespace="http://www.w3.org/1999/xhtml"
     xmlns:hcmc="http://hcmc.uvic.ca/ns"
+    xmlns:map="http://www.w3.org/2005/xpath-functions/map"
     expand-text="yes"
     version="3.0">
     <xd:doc scope="stylesheet">
@@ -43,6 +44,11 @@
     <xsl:include href="module_functions.xsl"/>
     
     <xd:doc>
+        <xd:desc>The folder from which things will be copied/renamed.</xd:desc>
+    </xd:doc>
+    <xsl:param name="sourceFolder" as="xs:string" select="'../tests/source'"/>
+    
+    <xd:doc>
         <xd:desc>The text file 
             containing the output from ls -al on the source folder.</xd:desc>
     </xd:doc>
@@ -63,7 +69,7 @@
     <xd:doc>
         <xd:desc>The individual filenames with full paths from the listing.</xd:desc>
     </xd:doc>
-    <xsl:variable name="files" as="xs:string*" select="tokenize(unparsed-text($sourceListing), '\s*&#x0a;\s*')"/>
+    <xsl:variable name="files" as="xs:string*" select="tokenize(replace(unparsed-text($sourceListing), '(^\s+)|(\s+$)', ''), '\s*&#x0a;\s*')"/>
     
 
     <xd:doc>
@@ -71,18 +77,34 @@
     </xd:doc>
     <xsl:template match="/">
         <xsl:message select="'Mapping ' || count($files) || ' files to their new names/locations.'"/>
+        <xsl:message select="'Source folder is ' || $sourceFolder || '; output folder is ' || $outputFolder || '.'"/>
         
         <!-- First build an in-memory map. -->
-        <!-- TODO. -->
+        <xsl:variable name="mapRenames" as="map(xs:string, xs:string)">
+            <xsl:map>
+                <xsl:for-each select="$files">
+                    <xsl:variable name="unfixedOutput" as="xs:string" select="$outputFolder || substring-after(., $sourceFolder)"/>
+                    <xsl:map-entry key="." select="hcmc:fix-bad-filename($unfixedOutput)"/>
+                </xsl:for-each>
+            </xsl:map>
+        </xsl:variable>
         
         <!-- Now output the map into custom simple XML. -->
-        <!-- TODO. -->
+        <xsl:result-document href="{replace($outputScript, '\.sh$', '.xml')}" method="xml" encoding="UTF-8" exclude-result-prefixes="#all" normalization-form="NFC" indent="yes">
+            <renames xmlns="http://hcmc.uvic.ca/ns">
+                <xsl:for-each select="map:keys($mapRenames)">
+                    <rename from="{.}" to="{map:get($mapRenames, .)}"/>
+                </xsl:for-each>
+            </renames>
+        </xsl:result-document>
         
         <!-- Finally write the script to move the files. -->
         
         <xsl:result-document href="{$outputScript}">
             <xsl:sequence select="'#!/bin/bash&#x0a;&#x0a;'"/>
-            <!-- TODO. -->
+            <xsl:for-each select="map:keys($mapRenames)">
+                <xsl:sequence select="'cp &quot;' || . || '&quot; &quot;' || map:get($mapRenames, .) || '&quot;&#x0a;'"/>
+            </xsl:for-each>
         </xsl:result-document>
         
     </xsl:template>
