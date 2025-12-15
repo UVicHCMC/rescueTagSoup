@@ -19,7 +19,7 @@
     
     Just type:
     
-    ant -Dsource=pathToSourceFolder -Doutput=pathToOutputFolder
+    ant -DsourceFolder=pathToSourceFolder -DoutputFolder=pathToOutputFolder
     
     at the command line to run the build. 
     
@@ -207,7 +207,7 @@
             the Ant context than in the XSLT.
         </description>
         <echo message="${echo.separator}"/>
-        <propertyregex property="outputFile" input="${wellFormedFile}" regexp="${temp}" replace="${output}"/>
+        <propertyregex property="outputFile" input="${wellFormedFile}" regexp="${temp}" replace="${outputFolder}"/>
         <echo message="Remediating known possible issues in the file ${wellFormedFile} to create ${outputFile}..."/>
         <dirname property="outputFolder" file="${outputFile}"/>
         <basename property="outputFileName" file="${outputFile}"/>
@@ -240,7 +240,7 @@
             <arg value="--xml"/>
             <arg value="--also-check-css"/>
             <arg value="--errors-only"/>
-            <arg value="${output}"/>
+            <arg value="${outputFolder}"/>
         </java>
     </target>
     
